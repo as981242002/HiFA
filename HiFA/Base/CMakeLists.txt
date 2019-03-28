@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 set(base_SRCS
     ../Base/FileUtil.cpp
+    ../Base/AsyncLogging.cpp
 )
 
 add_library(HiFA_base STATIC ${base_SRCS})

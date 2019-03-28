@@ -3,9 +3,12 @@
 ##############################
 build-HiFA-Desktop_Qt_5_12_0_Clang_64bit-Debug
 build-HiFA-Desktop_Qt_5_12_0_Clang_64bit-Default
+build-HiFA-Desktop_Qt_5_12_2_GCC_64bit-Debug/
+build-HiFA-Desktop_Qt_5_12_2_GCC_64bit-Default/
 
 #############################
 #### Files ##################
 #############################
 
-
+HiFA/CMakeLists.txt.user.b9f1028
+HiFA/CMakeLists.txt.user
