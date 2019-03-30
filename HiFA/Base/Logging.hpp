@@ -45,4 +45,5 @@ private:
     static std::string logFileName_;
 };
 
+#define LOG Logger(__FILE__, __LINE__).stream()
 #endif // Logger_HPP
