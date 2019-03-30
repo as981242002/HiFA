@@ -14,7 +14,7 @@ std::string Logger::logFileName_ = "/HiFA.log";
 
 void once_init()
 {
-    AsyncLogger_ = new AsyncLogging(Logging::getLogFileName());
+    AsyncLogger_ = new AsyncLogging(Logger::getLogFileName());
     AsyncLogger_->start();
 }
 
