@@ -94,7 +94,7 @@ public:
 
     LogStream& operator<<(float v)
     {
-        operator<<(static_cast<double>(v));
+        *this<<(static_cast<double>(v));
         return *this;
     }
 
@@ -104,6 +104,7 @@ public:
     LogStream& operator<<(char v)
     {
         buffer_.append(&v, 1);
+        return *this;
     }
 
     LogStream& operator<<(const char* str)
@@ -114,7 +115,7 @@ public:
         }
         else
         {
-            buffer_.append("((null))", 6);
+            buffer_.append("(null)", 6);
         }
 
         return *this;
