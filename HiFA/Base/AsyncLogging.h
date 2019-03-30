@@ -47,8 +47,8 @@ private:
     using  Buffer  = FixedBuffer <kLargeBuffer>;
     using  BufferPtr = std::shared_ptr<Buffer>;
     using  BufferPtrVector =  std::vector<BufferPtr>;
-    BufferPtr currentBuff_;
-    BufferPtr nextBuff_;
+    BufferPtr currentBuffer_;
+    BufferPtr nextBuffer_;
     BufferPtrVector buffers_;
 };
 #endif // BASE_ASYNCLOGGING_H

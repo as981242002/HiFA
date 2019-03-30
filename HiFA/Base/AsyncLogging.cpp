@@ -14,32 +14,32 @@ AsyncLogging::AsyncLogging(const std::string basename, int flushInterval):
     mutex_(),
     cond_(mutex_),
     count_(1),
-    currentBuff_(new Buffer),
-    nextBuff_(new Buffer),
+    currentBuffer_(new Buffer),
+    nextBuffer_(new Buffer),
     buffers_()
 {
     assert(basename_.size() > 1);
-    currentBuff_->bzero();
-    nextBuff_->bzero();
+    currentBuffer_->bzero();
+    nextBuffer_->bzero();
     buffers_.reserve(16);
 }
 
 void AsyncLogging::append(const char* logline, int len)
 {
     MutexLockGuard lock(mutex_);
-    if(currentBuff_->avail() > len)
+    if(currentBuffer_->avail() > len)
     {
-        currentBuff_->append(logline, len);
+        currentBuffer_->append(logline, len);
     }
     else
     {
-        buffers_.push_back(currentBuff_);
-        currentBuff_->reset();
-        if(nextBuff_)
-            currentBuff_ = std::move(nextBuff_);
+        buffers_.push_back(currentBuffer_);
+        currentBuffer_.reset();//ptr reset
+        if(nextBuffer_)
+            currentBuffer_ = std::move(nextBuffer_);
         else
-            currentBuff_.reset(new Buffer);
-        currentBuff_->append(logline, len);
+            currentBuffer_.reset(new Buffer);
+        currentBuffer_->append(logline, len);
         cond_.notify();
     }
 }
@@ -68,14 +68,14 @@ void AsyncLogging::threadFunc()
             {
                 cond_.waitForSeconds(flushInterval_);
             }
-            buffers_.push_back(currentBuff_);
-            currentBuff_.reset();
+            buffers_.push_back(currentBuffer_);
+            currentBuffer_.reset();
 
-            currentBuff_ = std::move(newBuffer1);
+            currentBuffer_ = std::move(newBuffer1);
             buffersToWrite.swap(buffers_);
-            if(!nextBuff_)
+            if(!nextBuffer_)
             {
-                nextBuff_ = std::move(newBuffer2);
+                nextBuffer_ = std::move(newBuffer2);
             }
         }
 
