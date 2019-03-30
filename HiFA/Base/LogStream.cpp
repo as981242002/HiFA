@@ -36,9 +36,9 @@ template class FixedBuffer<kSmallBuffer>;
 template class FixedBuffer<kLargeBuffer>;
 
 template <typename T>
-void LogStream::formatInterger(T v)
+void LogStream::formatInteger(T v)
 {
-    if(buffer_.avail() >= kMaxNumbericSize)
+    if(buffer_.avail() >= kMaxNumericSize)
     {
         size_t len = convert(buffer_.current(), v);
         buffer_.add(len);
@@ -60,46 +60,46 @@ LogStream &LogStream::operator<<(unsigned short v)
 
 LogStream &LogStream::operator<<(int v)
 {
-    formatInterger(v);
+    formatInteger(v);
     return *this;
 }
 
 LogStream &LogStream::operator<<(unsigned int v)
 {
-    formatInterger(v);
+    formatInteger(v);
     return *this;
 }
 
 LogStream &LogStream::operator<<(long v)
 {
-    formatInterger(v);
+    formatInteger(v);
     return *this;
 }
 
 LogStream &LogStream::operator<<(unsigned long v)
 {
-    formatInterger(v);
+    formatInteger(v);
     return *this;
 }
 
 LogStream &LogStream::operator<<(long long v)
 {
-    formatInterger(v);
+    formatInteger(v);
     return *this;
 }
 
 LogStream &LogStream::operator<<(unsigned long long v)
 {
-    formatInterger(v);
+    formatInteger(v);
     return *this;
 }
 
 
 LogStream &LogStream::operator<<(double v)
 {
-    if(buffer_.avail() >= kMaxNumbericSize)
+    if(buffer_.avail() >= kMaxNumericSize)
     {
-        int len = snprintf(buffer_.current(), kMaxNumbericSize, "%.12g", v);
+        int len = snprintf(buffer_.current(), kMaxNumericSize, "%.12g", v);
         buffer_.add(len);
     }
 
@@ -108,9 +108,9 @@ LogStream &LogStream::operator<<(double v)
 
 LogStream &LogStream::operator<<(long double v)
 {
-    if(buffer_.avail() >= kMaxNumbericSize)
+    if(buffer_.avail() >= kMaxNumericSize)
     {
-        int len = snprintf(buffer_.current(), kMaxNumbericSize, "%.12Lg", v);
+        int len = snprintf(buffer_.current(), kMaxNumericSize, "%.12Lg", v);
         buffer_.add(len);
     }
     return *this;

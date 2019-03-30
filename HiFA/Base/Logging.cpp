@@ -10,7 +10,7 @@
 static pthread_once_t once_flag= PTHREAD_ONCE_INIT;
 static AsyncLogging* AsyncLogger_;
 
-std::string Logger::logFileName_ = "/HiFA.log";
+std::string Logger::logFileName_ = "./HiFA.log";
 
 void once_init()
 {

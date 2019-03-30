@@ -26,7 +26,7 @@ AsyncLogging::AsyncLogging(const std::string basename, int flushInterval):
 
 void AsyncLogging::append(const char* logline, int len)
 {
-    MutexLockGugrd lock(mutex_);
+    MutexLockGuard lock(mutex_);
     if(currentBuff_->avail() > len)
     {
         currentBuff_->append(logline, len);
@@ -63,7 +63,7 @@ void AsyncLogging::threadFunc()
         assert(buffersToWrite.empty());
 
         {
-            MutexLockGugrd lock(mutex_);
+            MutexLockGuard lock(mutex_);
             if(buffers_.empty())
             {
                 cond_.waitForSeconds(flushInterval_);

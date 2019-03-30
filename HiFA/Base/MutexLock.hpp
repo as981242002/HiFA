@@ -39,15 +39,15 @@ private:
     friend class Condition;
 };
 
-class MutexLockGugrd:NonCopyable
+class MutexLockGuard:NonCopyable
 {
 public:
-    explicit MutexLockGugrd(MutexLock& mutex):mutex_(mutex)
+    explicit MutexLockGuard(MutexLock& mutex):mutex_(mutex)
     {
         mutex_.lock();
     }
 
-    ~MutexLockGugrd()
+    ~MutexLockGuard()
     {
         mutex_.unlock();
     }

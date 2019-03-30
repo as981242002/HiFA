@@ -152,11 +152,11 @@ private:
     void staticCheck();
 
     template<typename T>
-    void formatInterger(T);
+    void formatInteger(T);
 
     Buffer buffer_;
 
-    static const int kMaxNumbericSize = 32;
+    static const int kMaxNumericSize = 32;
 };
 
 #endif // BASE_LOGSTREAM_HPP

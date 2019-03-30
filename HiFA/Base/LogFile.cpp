@@ -17,13 +17,13 @@ LogFile::LogFile(const string &basename, int flushEveryN):
 
 void LogFile::append(const char *logline, int len)
 {
-    MutexLockGugrd lock(*mutex_);
+    MutexLockGuard lock(*mutex_);
     appendUnlocked(logline, len);
 }
 
 void LogFile::flush()
 {
-    MutexLockGugrd lock(*mutex_);
+    MutexLockGuard lock(*mutex_);
     file_->flush();
 }
 
