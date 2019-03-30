@@ -27,10 +27,6 @@ void LogFile::flush()
     file_->flush();
 }
 
-bool LogFile::rollFile()
-{
-
-}
 
 void LogFile::appendUnlocked(const char *logline, int len)
 {

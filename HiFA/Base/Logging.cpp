@@ -39,7 +39,10 @@ void Logger::Impl::formatTime()
     time_t time;
     char str_t[26] = {0};
     gettimeofday(&tv, nullptr);
-
+    time = tv.tv_sec;
+    struct tm* p_time = localtime(&time);
+    strftime(str_t, 26, "%Y-%m-%d %H:%M:%S\n", p_time);
+    stream_ << str_t;
 }
 
 Logger::Logger(const char* fileName, int line):
