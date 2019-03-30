@@ -22,6 +22,7 @@ public:
             stop();
     }
 
+    void append(const char* logline, int len);
     void start()
     {
         running_ = true;
