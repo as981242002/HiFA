@@ -17,7 +17,7 @@ public:
     ~Epoll() = default;
     void epollAdd(SP_Channel request, int timeout);
     void epollMod(SP_Channel request, int timeout);
-    void epollDel(SP_Channel request, int timeout);
+    void epollDel(SP_Channel request);
     std::vector<std::shared_ptr<Channel>> poll();
     std::vector<std::shared_ptr<Channel>> getEventsRequest(int events_num);
     void addTimer(std::shared_ptr<Channel>request_data, int timeout);

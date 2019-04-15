@@ -67,7 +67,7 @@ void Epoll::epollMod(SP_Channel request, int timeout)
     }
 }
 
-void Epoll::epollDel(SP_Channel request, int timeout)
+void Epoll::epollDel(SP_Channel request)
 {
      int fd = request->getFd();
      struct  epoll_event event;
