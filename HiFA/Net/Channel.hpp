@@ -37,7 +37,7 @@ public:
     Channel(EventLoop* loop, int fd);
     ~Channel();
     int getFd();
-    void setFd();
+    void setFd(int fd);
 
     void setHolder(std::shared_ptr<HttpData> holder)
     {
