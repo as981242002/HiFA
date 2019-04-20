@@ -23,9 +23,6 @@ private:
 
     std::weak_ptr<HttpData> holder_;
 private:
-    int parse_URI();
-    int parse_Header();
-    int analysisRequest();
 
     CallBack readHandler_;
     CallBack writeHandler_;
@@ -35,9 +32,15 @@ private:
 public:
     Channel(EventLoop* loop);
     Channel(EventLoop* loop, int fd);
-    ~Channel();
-    int getFd();
-    void setFd(int fd);
+    ~Channel() = default;
+    inline int getFd() const
+    {
+        return fd_;
+    }
+    inline void setFd(int fd)
+    {
+        fd_ = fd;
+    }
 
     void setHolder(std::shared_ptr<HttpData> holder)
     {
@@ -98,7 +101,6 @@ public:
 
     void handleRead();
     void handleWrite();
-    void handleError(int fd, int err_num, std::string short_msg);
     void handleConn();
 
     void setRevents(uint32_t ev)
