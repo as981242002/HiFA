@@ -38,6 +38,11 @@ public:
         poller_->epollDel(channel);
     }
 
+    void removeFromPoller(shared_ptr<Channel> channel)
+    {
+         poller_->epollDel(channel);
+    }
+
     void updatePoller(shared_ptr<Channel> channel, int timeout = 0)
     {
         poller_->epollMod(channel, timeout);
