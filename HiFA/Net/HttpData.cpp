@@ -101,6 +101,200 @@ void HttpData::newEvent()
     loop_->addToPoller(channel_, DEFAULT_EXPIRED_TIME);
 }
 
+void HttpData::handleRead()
+{
+    uint32_t& events = channel_->getEvents();
+    do
+    {
+        bool zero = false;
+        int read_num = readn(fd_, inBuffer_, zero);
+        LOG << "Request:" << inBuffer_;
+        if(connectionState_ == ConnectionState::H_DISCONNECTING)
+        {
+            inBuffer_.clear();
+            break;
+        }
+
+        if(read_num < 0)
+        {
+            perror("1");
+            error_ = true;
+            handleError(fd_, 400, "Bad Request");
+            break;
+        }
+        else if(zero)
+        {
+            connectionState_ = ConnectionState::H_DISCONNECTING;
+            if(read_num == 0)
+            {
+                break;
+            }
+        }
+
+        if(state_ == ProcessState::STATE_PARSE_URI)
+        {
+            URIState flag  = this->parseURI();
+            if(flag == URIState::PARSE_URI_AGAIN)
+            {
+                break;
+            }
+            else if(flag == URIState::PARSE_URI_ERROR)
+            {
+                perror("2");
+                LOG << "fd = " << fd_ << "," << inBuffer_ << "*******";
+                inBuffer_.clear();
+                handleError(fd_, 400, "Bad Request");
+                break;
+            }
+            else
+                state_ = ProcessState::STATE_PARSE_HEADERS;
+        }
+
+        if(state_ == ProcessState::STATE_PARSE_HEADERS)
+        {
+            HeaderState flag = this->parseHeaders();
+            if(flag == HeaderState::PARSE_HEADER_AGAIN)
+                break;
+            else if(flag == HeaderState::PARSE_HEADER_ERROR)
+            {
+                perror("3");
+                error_ = true;
+                handleError(fd_, 400, "Bad Request");
+                break;
+            }
+
+            if(method_ == HttpMethod::METHOD_POST)
+            {
+                state_ = ProcessState::STATE_RECV_BODY;
+            }
+            else
+            {
+                state_ = ProcessState::STATE_ANALYSIS;
+            }
+        }
+
+        if(state_ == ProcessState::STATE_RECV_BODY)
+        {
+            int conlen = -1;
+            if(headers_.find("Content-length") != headers_.end())
+            {
+                conlen = stoi(headers_["Content-length"]);
+            }
+            else
+            {
+                error_ = true;
+                handleError(fd_, 400, "Bad Request: Lack of argument(Content-length)");
+                break;
+            }
+            if(static_cast<int>(inBuffer_.size() < conlen))
+                break;
+            state_ = ProcessState::STATE_ANALYSIS;
+        }
+
+        if(state_ == ProcessState::STATE_ANALYSIS)
+        {
+            AnalyusisState flag = this->analysisRequest();
+            if(flag == AnalyusisState::ANALYSIS_SUCCESS)
+            {
+                state_ = ProcessState::STATE_FINSH;
+                break;
+            }
+            else
+            {
+                error_ = true;
+                break;
+            }
+        }
+
+    } while(false);
+
+    if(!error_)
+    {
+        if(outBuffer_.size() > 0)
+        {
+            handleWrite();
+        }
+
+        if(!error_ && state_ == ProcessState::STATE_FINSH)
+        {
+            this->reset();
+            if(inBuffer_.size() > 0 && connectionState_ != ConnectionState::H_DISCONNECTING)
+            {
+                handleRead();
+            }
+        }
+        else if(!error_ && connectionState_ != ConnectionState::H_DISCONNECTED)
+        {
+            events |= EPOLLIN;
+        }
+    }
+}
+
+void HttpData::handleWrite()
+{
+    if(!error_ && connectionState_ != ConnectionState::H_DISCONNECTED)
+    {
+        uint32_t& events = channel_->getEvents();
+        if(writen(fd_, outBuffer_) < 0)
+        {
+            perror("writen");
+            events = 0;
+            error_ = true;
+        }
+
+        if(outBuffer_.size() > 0)
+            events |= EPOLLOUT;
+    }
+}
+
+void HttpData::handleConn()
+{
+    seperateTimer();
+    uint32_t& events = channel_->getEvents();
+    if(!error_ && connectionState_ == ConnectionState::H_CONNECTED)
+    {
+         if(events != 0)
+         {
+             int timeout = DEFAULT_EXPIRED_TIME;
+             if(keepAlive_)
+             {
+                 timeout = DEFAULT_KEEP_TIME;
+             }
+
+             if((events & EPOLLIN) && (events & EPOLLOUT))
+             {
+                 events = static_cast<uint32_t>(0);
+                 events |= EPOLLOUT;
+             }
+
+             events |= EPOLLOUT;
+             loop_->updatePoller(channel_, timeout);
+         }
+         else if(keepAlive_ )
+         {
+             events |= (EPOLLIN | EPOLLOUT);
+             int timeout = DEFAULT_KEEP_TIME;
+             loop_->updatePoller(channel_, timeout);
+         }
+         else
+         {
+             events |= (EPOLLIN | EPOLLOUT);
+             int timeout = (DEFAULT_KEEP_TIME >> 1);
+             loop_->updatePoller(channel_, timeout);
+         }
+    }
+    else if(!error_ && connectionState_ == ConnectionState::H_DISCONNECTING && (events & EPOLLOUT))
+    {
+        events = (EPOLLOUT | EPOLLET);
+    }
+    else
+    {
+        loop_->runInLoop(bind(&HttpData::handleClose, shared_from_this()));
+    }
+
+}
+
+
 void HttpData::handleError(int fd, int err_num, string short_msg)
 {
     short_msg = " " + short_msg ;
