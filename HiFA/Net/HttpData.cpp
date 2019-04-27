@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -315,5 +315,310 @@ void HttpData::handleError(int fd, int err_num, string short_msg)
     sprintf(sendBuff, "%s", headerBuff.c_str());
     writen(fd, sendBuff, strlen(sendBuff));
     sprintf(sendBuff, "%s", bodyBuff.c_str());
-    writen(fd, sendBuff, strlen(sendBuff));
+	writen(fd, sendBuff, strlen(sendBuff));
 }
+
+URIState HttpData::parseURI()
+{
+	string str = inBuffer_;
+	string copy = str;
+
+	size_t pos = str.find('\r',  nowReadPos_);
+	if(pos < 0)
+	{
+			return URIState::PARSE_URI_AGAIN;
+	}
+
+	string request_line = str.substr(0, pos);
+	if(str.size() > pos + 1)
+	{
+		str = str.substr(pos + 1);
+	}
+	else
+		str.clear();
+
+	int posGet = request_line.find("GET");
+	int posPost = request_line.find("POST");
+	int posHead = request_line.find("HEAD");
+
+	if(posGet >= 0)
+	{
+		pos = posGet;
+		method_  = HttpMethod::METHOD_GET;
+	}
+	else if(posPost >= 0)
+	{
+		pos = posPost;
+		method_ = HttpMethod::METHOD_POST;
+	}
+	else if(posHead)
+	{
+		pos = posHead;
+		method_ = HttpMethod::METHOD_HEAD;
+	}
+	else
+	{
+		return URIState::PARSE_URI_ERROR ;
+	}
+
+	pos = request_line.find("/", pos);
+	if(pos < 0)
+	{
+		fileName_ = "index.html";
+		HTTPVersion_ = HttpVersion::HTTP_11;
+		return URIState::PARSE_URI_SUCCESS ;
+	}
+	else
+	{
+		size_t space_pos = request_line.find(' ', pos);
+		if(space_pos < 0)
+		{
+			return  URIState::PARSE_URI_ERROR;
+		}
+		else
+		{
+			if(space_pos - pos > 1)
+			{
+				fileName_ = request_line.substr(pos +  1, space_pos - pos - 1);
+				size_t  question_pos = fileName_.find('?');
+				if(question_pos >= 0 )
+				{
+					fileName_ = fileName_.substr(0, question_pos);
+				}
+			}
+			else
+			{
+				fileName_ = "index.html";
+			}
+		}
+		pos = space_pos;
+	}
+
+	pos = request_line.find("/", pos);
+	if(pos < 0)
+		return URIState::PARSE_URI_ERROR;
+	else
+	{
+		if(request_line.size() - pos <= 3)
+			return URIState::PARSE_URI_ERROR;
+		else
+		{
+			string ver = request_line.substr(pos + 1, 3);
+			if(ver == "1.0")
+				HTTPVersion_ = HttpVersion::HTTP_10;
+			else  if(ver == "1.1")
+				HTTPVersion_ = HttpVersion::HTTP_11;
+			else
+				return  URIState::PARSE_URI_ERROR;
+		}
+	}
+
+	return  URIState::PARSE_URI_SUCCESS;
+}
+
+HeaderState HttpData::parseHeaders()
+{
+	string& str = inBuffer_;
+	int key_start = -1;
+	int key_end = -1;
+	int value_start = -1;
+	int value_end = -1;
+	int now_read_line_begin = 0;
+	bool not_finish = true;
+	size_t i = 0;
+	for(; i < str.size() && not_finish; ++ i)
+	{
+		switch (hState_)
+		{
+			case ParseState::H_START :
+			{
+				if(str[i] == '\n' || str[i] == '\r')
+				{
+					break;
+				}
+
+				hState_ = ParseState::H_KEY;
+				key_start = i ;
+				now_read_line_begin = i;
+				break;
+			}
+			case  ParseState::H_KEY:
+			{
+				if(str[i] == ':')
+				{
+					key_end = i;
+					if(key_end - key_start <= 0)
+					{
+						return HeaderState::PARSE_HEADER_ERROR;
+					}
+					hState_ = ParseState::H_COLON;
+				}
+				else if(str[i] == '\n' || str[i] == '\r')
+				{
+					return HeaderState::PARSE_HEADER_ERROR;
+				}
+				break;
+			}
+			case ParseState::H_COLON:
+			{
+				if(str[i] == ' ')
+				{
+					hState_ = ParseState::H_SPACES_AFTER_COLON;
+				}
+				else
+				{
+					return HeaderState::PARSE_HEADER_ERROR;
+				}
+				break;
+			}
+			case ParseState::H_SPACES_AFTER_COLON:
+			{
+				hState_ = ParseState::H_VALUE;
+				value_start = i;
+				break;
+			}
+			case ParseState::H_VALUE:
+			{
+				if(str[i] == '\r')
+				{
+					hState_ = ParseState::H_CR;
+					value_end = i;
+					if(value_end - value_start <= 0)
+						return HeaderState::PARSE_HEADER_ERROR;
+				}
+				else  if(i - value_start > 255)
+					return HeaderState::PARSE_HEADER_ERROR;
+				break;
+			}
+			case ParseState::H_CR:
+			{
+				if(str[i] == '\n')
+				{
+					hState_ = ParseState::H_LF;
+					string key(str.begin() + key_start, str.begin() + key_end);
+					string value(str.begin() + value_start, str.begin() + value_end);
+					headers_[key] = value;
+					now_read_line_begin = i;
+				}
+				else
+					return HeaderState::PARSE_HEADER_ERROR;
+				break;
+			}
+			case ParseState::H_LF:
+			{
+				if(str[i] == '\r')
+				{
+					hState_ = ParseState::H_END_CR;
+				}
+				else
+				{
+					key_start = i;
+					hState_ = ParseState::H_KEY;
+				}
+				break;
+			}
+			case ParseState::H_END_CR:
+			{
+				if(str[i] == '\n')
+				{
+					hState_ = ParseState::H_END_LF;
+				}
+				else
+					return HeaderState::PARSE_HEADER_ERROR;
+				break;
+			}
+			case ParseState::H_END_LF:
+			{
+				not_finish = false;
+				key_start = i;
+				now_read_line_begin = i;
+				break;
+			}
+		}
+	}
+	if(hState_ == ParseState::H_END_LF)
+	{
+		str = str.substr(i);
+		return HeaderState::PARSE_HEADER_SUCCESS;
+	}
+	str = str.substr(now_read_line_begin);
+	return HeaderState::PARSE_HEADER_AGAIN;
+}
+
+AnalyusisState HttpData::analysisRequest()
+{
+	if(method_ == HttpMethod::METHOD_POST)
+	{
+
+	}
+	else if(method_ == HttpMethod::METHOD_GET || method_ == HttpMethod::METHOD_HEAD)
+	{
+		string header = "";
+		header += "HTTP/1.1 200 OK \r\n";
+		if(headers_.find("Connection") != headers_.end() && (headers_["Connection"] == "Keep-Alive" || headers_["Connection"] == "keep-alive"))
+		{
+			keepAlive_ = true;
+			header += string("Connection:Keep-Alive\r\n") + "Keep-Alive: timeout" + to_string(DEFAULT_KEEP_TIME) + "\r\n";
+		}
+		int dot_pos = fileName_.find('.');
+		string filetype = "";
+		if(dot_pos < 0)
+		{
+			filetype = MimeType::getMime("default");
+		}
+		else
+		{
+			filetype = MimeType::getMime(fileName_.substr(dot_pos));
+		}
+
+		if(fileName_ == "hello")
+		{
+			outBuffer_ = "HTTP/1.1 200 OK \r\n Connect-type:text /plain \r\n\r Hello HiFA";
+			return AnalyusisState::ANALYSIS_SUCCESS;
+		}
+
+		struct stat sbuf;
+		if(stat(fileName_.c_str(), &sbuf) < 0)
+		{
+			header.clear();
+			handleError(fd_, 404, "Not found");
+			return AnalyusisState::ANALYSIS_ERROR;
+		}
+		header += "Content-type:" + filetype + "\r\n";
+		header += "Content-type:" + to_string(sbuf.st_size) + "\r\n";
+		header += "Server: HiFA \r\n";
+
+		header += "\r\n";
+		outBuffer_ += header;
+
+		if(method_ == HttpMethod::METHOD_HEAD)
+		{
+			return AnalyusisState::ANALYSIS_SUCCESS;
+		}
+
+		int src_fd = open(fileName_.c_str(), O_RDONLY, 0);
+		if(src_fd < 0)
+		{
+			outBuffer_.clear();
+			handleError(fd_, 404, "not found");
+			return  AnalyusisState::ANALYSIS_ERROR;
+		}
+
+		void* mmapRet = mmap(nullptr, sbuf.st_size, PROT_READ, MAP_PRIVATE, src_fd, 0);
+		close(src_fd);
+		if(mmapRet == (void*) -1)
+		{
+			munmap(mmapRet, sbuf.st_size);
+			outBuffer_.clear();
+			handleError(fd_, 404, "not found");
+			return  AnalyusisState::ANALYSIS_ERROR;
+		}
+
+		char* src_addr = static_cast<char*>(mmapRet);
+		outBuffer_ += string(src_addr, src_addr + sbuf.st_size);
+		munmap(mmapRet, sbuf.st_size);
+		return  AnalyusisState::ANALYSIS_SUCCESS;
+	}
+	return AnalyusisState::ANALYSIS_ERROR;
+}
+
