@@ -1,4 +1,4 @@
-#include <getopt.h>
+﻿#include <getopt.h>
 #include <string>
 #include "./Net/EventLoop.hpp"
 #include "./Net/Server.hpp"
@@ -12,7 +12,7 @@ int main(int argc, char* args[])
 
 	int opt;
 	const char* str = "t:l:p:";
-	while((opt == getopt(argc, args, str)) != -1)
+	while((opt = getopt(argc, args, str)) != -1)
 	{
 		switch (opt)
 		{

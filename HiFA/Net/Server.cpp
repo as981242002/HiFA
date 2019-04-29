@@ -1,4 +1,4 @@
-#include <functional>
+﻿#include <functional>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -10,10 +10,10 @@
 Server::Server(EventLoop *loop, int poolsize, int port):
     loop_(loop),
     threadsize_(poolsize),
-    port_(port),
     pool_(new EventLoopThreadPool(loop_, poolsize)),
     started_(false),
     acceptChannel_(new Channel(loop_)),
+	port_(port),
     listenFd_(socketBindListen(port_))
 {
     acceptChannel_->setFd(listenFd_);

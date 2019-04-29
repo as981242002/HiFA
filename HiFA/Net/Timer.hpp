@@ -1,4 +1,4 @@
-#ifndef NET_TIMER_HPP
+﻿#ifndef NET_TIMER_HPP
 #define NET_TIMER_HPP
 
 #include <unistd.h>
@@ -58,7 +58,7 @@ public:
 private:
     using SPTimerNode = std::shared_ptr<TimerNode>;
 
-    std::priority_queue<SPTimerNode, std::queue<SPTimerNode>, TimerCmp> timerNodeQueue;
+	std::priority_queue<SPTimerNode, std::deque<SPTimerNode>, TimerCmp> timerNodeQueue;
 };
 
 #endif // NET_TIMER_HPP

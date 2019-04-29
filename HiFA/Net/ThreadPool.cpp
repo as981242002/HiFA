@@ -1,4 +1,4 @@
-#include "ThreadPool.hpp"
+﻿#include "ThreadPool.hpp"
 
 pthread_mutex_t  ThreadPool::lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t ThreadPool::notify = PTHREAD_COND_INITIALIZER;
@@ -88,7 +88,7 @@ int ThreadPool::Add(std::shared_ptr<void> args, std::function<void (std::shared_
 
 int ThreadPool::Destroy(ShutDownOption option)
 {
-    int i, err = 0;
+	int err = 0;
 
     if(pthread_mutex_lock(&lock) != 0)
         return static_cast<int>(ThreadPoolStatus::LOCK_FAILURE);

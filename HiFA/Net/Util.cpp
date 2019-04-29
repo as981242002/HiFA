@@ -1,4 +1,4 @@
-#include "Util.hpp"
+﻿#include "Util.hpp"
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -15,7 +15,7 @@ ssize_t readn(int fd, void *buff, size_t n)
     size_t nleft = n;
     ssize_t nread = 0;
     ssize_t readSum = 0;
-    char* ptr = (char*) buff;
+	char* ptr = reinterpret_cast<char*>(buff) ;
     while(nleft > 0)
     {
         if((nread = read(fd, ptr, nleft)) < 0)
@@ -24,7 +24,7 @@ ssize_t readn(int fd, void *buff, size_t n)
             {
                 nread = 0;
             }
-            else if(errno  = EAGAIN)
+			else if(errno  == EAGAIN)
             {
                 return readSum;
             }
