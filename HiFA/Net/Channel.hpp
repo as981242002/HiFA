@@ -132,4 +132,4 @@ public:
 };
 
 using SP_Channel = std::shared_ptr<Channel>;
-#endif // !CHANNEL_HPP
+#endif // CHANNEL_HPP
