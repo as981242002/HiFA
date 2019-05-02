@@ -1,4 +1,4 @@
-#ifndef NET_CHANNEL_HPP
+﻿#ifndef NET_CHANNEL_HPP
 #define NET_CHANNEL_HPP
 
 #include <string>
@@ -11,7 +11,7 @@
 class EventLoop;
 class HttpData;
 
-class Channel
+class Channel:NonCopyable
 {
 private:
     using CallBack = std::function<void()>;
