@@ -11,7 +11,7 @@
 class EventLoop;
 class HttpData;
 
-class Channel
+class Channel:NonCopyable
 {
 private:
     using CallBack = std::function<void()>;
