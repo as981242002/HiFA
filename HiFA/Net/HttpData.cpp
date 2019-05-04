@@ -323,8 +323,8 @@ URIState HttpData::parseURI()
 	string str = inBuffer_;
 	string copy = str;
 
-	size_t pos = str.find('\r',  nowReadPos_);
-	if(pos < 0)
+	size_t  pos  = str.find('\r', nowReadPos_);
+	if(pos == string::npos)
 	{
 			return URIState::PARSE_URI_AGAIN;
 	}
@@ -337,21 +337,21 @@ URIState HttpData::parseURI()
 	else
 		str.clear();
 
-	int posGet = request_line.find("GET");
-	int posPost = request_line.find("POST");
-	int posHead = request_line.find("HEAD");
+	size_t posGet = request_line.find("GET");
+	size_t posPost = request_line.find("POST");
+	size_t posHead = request_line.find("HEAD");
 
-	if(posGet >= 0)
+	if(posGet  != string::npos)
 	{
 		pos = posGet;
 		method_  = HttpMethod::METHOD_GET;
 	}
-	else if(posPost >= 0)
+	else if(posPost != string::npos)
 	{
 		pos = posPost;
 		method_ = HttpMethod::METHOD_POST;
 	}
-	else if(posHead)
+	else if(posHead != string::npos)
 	{
 		pos = posHead;
 		method_ = HttpMethod::METHOD_HEAD;
@@ -362,7 +362,7 @@ URIState HttpData::parseURI()
 	}
 
 	pos = request_line.find("/", pos);
-	if(pos < 0)
+	if(pos == string::npos)
 	{
 		fileName_ = "index.html";
 		HTTPVersion_ = HttpVersion::HTTP_11;
@@ -371,7 +371,7 @@ URIState HttpData::parseURI()
 	else
 	{
 		size_t space_pos = request_line.find(' ', pos);
-		if(space_pos < 0)
+		if(space_pos == string::npos)
 		{
 			return  URIState::PARSE_URI_ERROR;
 		}
@@ -381,7 +381,7 @@ URIState HttpData::parseURI()
 			{
 				fileName_ = request_line.substr(pos +  1, space_pos - pos - 1);
 				size_t  question_pos = fileName_.find('?');
-				if(question_pos >= 0 )
+				if(question_pos != string::npos )
 				{
 					fileName_ = fileName_.substr(0, question_pos);
 				}
@@ -395,7 +395,7 @@ URIState HttpData::parseURI()
 	}
 
 	pos = request_line.find("/", pos);
-	if(pos < 0)
+	if(pos == string::npos)
 		return URIState::PARSE_URI_ERROR;
 	else
 	{

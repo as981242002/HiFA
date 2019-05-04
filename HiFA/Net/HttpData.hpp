@@ -1,4 +1,4 @@
-#ifndef NET_HTTPDATA_HPP
+﻿#ifndef NET_HTTPDATA_HPP
 #define NET_HTTPDATA_HPP
 
 #include<string>
@@ -133,7 +133,7 @@ private:
     HttpVersion HTTPVersion_;
     std::string fileName_;
     std::string path_;
-    int nowReadPos_;
+	size_t nowReadPos_;
     ProcessState state_;
     ParseState hState_;
     bool keepAlive_;
